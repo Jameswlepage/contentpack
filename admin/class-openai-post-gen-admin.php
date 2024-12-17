@@ -23,9 +23,9 @@ class OpenAI_Post_Gen_Admin
 
     public function add_settings_page()
     {
-        add_options_page(
-            'OpenAI Post Gen',
-            'OpenAI Post Gen',
+        add_management_page(
+            'Post Generator',
+            'Post Generator',
             'manage_options',
             'openai-post-gen',
             array($this, 'settings_page_html')
@@ -62,7 +62,7 @@ class OpenAI_Post_Gen_Admin
         }
 ?>
         <div class="wrap opg-wrap">
-            <h1>OpenAI Post Generator</h1>
+            <h1>Post Generator</h1>
             <form method="post" action="options.php" class="opg-form">
                 <?php
                 settings_fields($this->plugin->option_name);
@@ -84,7 +84,7 @@ class OpenAI_Post_Gen_Admin
 
                 <hr>
                 <h3>Bulk Generation</h3>
-                <p><small>Specify number of clusters, cluster topics, and general theme. A plan is generated first, then all posts.</small></p>
+                <p><small>Specify number of clusters, cluster topics, and general theme. By default, each cluster generates 5 posts. The total posts = number_of_clusters * 5. Adjust carefully!</small></p>
                 <label>Number of clusters: <input type="number" id="opg-cluster-count" min="1" value="3" class="small-text"></label><br><br>
                 <label>Cluster topics (comma-separated):<br>
                     <input type="text" id="opg-cluster-topics" style="width:400px;"
@@ -94,6 +94,10 @@ class OpenAI_Post_Gen_Admin
                 <label>General theme:<br>
                     <textarea id="opg-general-theme" style="width:400px;height:100px;">Create comprehensive content about the impact of AI technology on modern society. Focus on explaining complex concepts in an accessible way, addressing concerns and opportunities, and exploring real-world implications for businesses and individuals.</textarea>
                 </label><br><br>
+
+                <p><strong>Estimated Total Posts:</strong> <span id="opg-total-posts">0</span></p>
+                <p id="opg-warning" style="color:red;display:none;">Warning: Generating a very large number of posts may cause unexpected behavior.</p>
+
                 <button id="opg-generate-bulk" class="button button-primary">Generate Bulk Posts</button>
 
                 <div id="opg-status" style="margin-top:20px;"></div>
@@ -104,7 +108,7 @@ class OpenAI_Post_Gen_Admin
 
     public function admin_assets($hook)
     {
-        if ($hook === 'settings_page_openai-post-gen') {
+        if ($hook === 'tools_page_openai-post-gen') {
             wp_enqueue_script('opg-admin-js', plugin_dir_url(__FILE__) . '../assets/admin.js', array('jquery'), '1.0', true);
             wp_localize_script('opg-admin-js', 'opgAjax', array(
                 'ajax_url' => admin_url('admin-ajax.php'),

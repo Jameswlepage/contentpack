@@ -7,8 +7,8 @@ if (!defined('ABSPATH')) {
 class OpenAI_Post_Gen_API
 {
     private $api_key;
-    private $model = 'gpt-4o';
-    private $schema; // loaded from schema.json
+    private $model = 'gpt-4o-mini';
+    private $schema;
 
     public function __construct($api_key = '')
     {
@@ -34,7 +34,6 @@ class OpenAI_Post_Gen_API
             return new WP_Error('no_api_key', 'No API key provided.');
         }
 
-        // Use schema from $defs
         if (!isset($this->schema['$defs'][$schema_key])) {
             return new WP_Error('invalid_schema_key', 'Invalid schema key requested.');
         }
@@ -43,7 +42,6 @@ class OpenAI_Post_Gen_API
             'model' => $this->model,
             'messages' => $messages,
             'temperature' => $temperature,
-            // Enforce JSON schema
             'response_format' => array(
                 'type' => 'json_schema',
                 'json_schema' => array(
@@ -62,6 +60,7 @@ class OpenAI_Post_Gen_API
             'body' => json_encode($body),
             'timeout' => 120
         );
+
         $response = wp_remote_post('https://api.openai.com/v1/chat/completions', $args);
 
         if (is_wp_error($response)) {
@@ -77,7 +76,6 @@ class OpenAI_Post_Gen_API
             return new WP_Error('openai_error', 'OpenAI API Error: ' . $data['error']['message']);
         }
 
-        // Check for refusal
         if (isset($data['choices'][0]['message']['refusal'])) {
             return new WP_Error('refusal', $data['choices'][0]['message']['refusal']);
         }
@@ -96,6 +94,7 @@ class OpenAI_Post_Gen_API
             $prompt .= ($index + 1) . ". $cluster_topic\n";
         }
         $prompt .= "General theme: $theme\n";
+        $prompt .= "Each cluster should produce exactly 5 posts.\n";
         $prompt .= "Follow the schema strictly and return only JSON.\n";
 
         $messages = array(
@@ -106,7 +105,7 @@ class OpenAI_Post_Gen_API
         return $this->request($messages, 'plan');
     }
 
-    public function generate_single_post_content($title, $slug, $summary, $categories, $tags, $theme, $cluster_topic)
+    public function generate_single_post_content($title, $slug, $summary, $categories, $tags, $theme, $cluster_topic, $other_posts = array(), $site_url = '')
     {
         $cat_list = implode(", ", $categories);
         $tag_list = implode(", ", $tags);
@@ -116,6 +115,15 @@ class OpenAI_Post_Gen_API
         $prompt .= "General theme: $theme\n";
         $prompt .= "Title: \"{$title}\"\nSlug: \"{$slug}\"\nSummary: \"{$summary}\"\n";
         $prompt .= "Categories: [{$cat_list}]\nTags: [{$tag_list}]\n";
+        if (!empty($other_posts)) {
+            $prompt .= "Below are other posts in the same cluster you can reference internally:\n";
+            foreach ($other_posts as $op) {
+                $prompt .= "- Title: \"{$op['title']}\", Slug: \"{$op['slug']}\"\n";
+            }
+            $prompt .= "Please integrate natural internal links to some of these posts within the article content. Use HTML links like: <a href=\"{$site_url}/slug\">Title</a>. Do not create a separate 'Related posts' section, just integrate links naturally in the text.\n";
+        } else {
+            $prompt .= "No other posts to link internally.\n";
+        }
         $prompt .= "Follow the schema strictly and return only JSON.\n";
 
         $messages = array(

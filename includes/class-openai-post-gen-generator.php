@@ -15,13 +15,15 @@ class OpenAI_Post_Gen_Generator
 
     public function generate_single_post($title = '', $topic = '', $theme = '', $slug = '', $categories = array(), $tags = array(), $summary = '')
     {
+
         if (empty($title)) {
-            // Generate a simple single post if no title given
             $topic_msg = $topic ? "Topic: $topic\n" : "";
             $theme_msg = $theme ? "Theme: $theme\n" : "";
             $prompt = "You are a professional content writer. Generate a single WordPress post in strict JSON format.\n";
             $prompt .= "$topic_msg$theme_msg";
             $prompt .= "Return JSON with title, slug, summary, content, publish_date (ISO 8601), categories, tags.\n";
+            $prompt .= "Do not create a separate 'Related posts' section. No related posts needed.\n";
+            $prompt .= "Just produce a standalone well-structured article.\n";
             $prompt .= "Follow the schema strictly and return only JSON.\n";
 
             $messages = array(
@@ -35,8 +37,7 @@ class OpenAI_Post_Gen_Generator
             }
             $data = json_decode($response, true);
         } else {
-            // Use the structured single post generation
-            $response = $this->plugin->api->generate_single_post_content($title, $slug, $summary, $categories, $tags, $theme, $topic);
+            $response = $this->plugin->api->generate_single_post_content($title, $slug, $summary, $categories, $tags, $theme, $topic, array(), get_site_url());
             if (is_wp_error($response)) {
                 return $response;
             }
@@ -63,22 +64,32 @@ class OpenAI_Post_Gen_Generator
         }
 
         $all_posts_info = array();
+        $site_url = get_site_url();
 
         foreach ($plan['clusters'] as $cluster_data) {
             if (empty($cluster_data['cluster_topic']) || empty($cluster_data['posts'])) {
                 continue;
             }
             $cluster_topic = $cluster_data['cluster_topic'];
-            foreach ($cluster_data['posts'] as $post_info) {
-                if (empty($post_info['title']) || empty($post_info['slug'])) {
+            $cluster_posts = $cluster_data['posts']; // all posts in this cluster
+
+            foreach ($cluster_posts as $current_post_info) {
+                if (empty($current_post_info['title']) || empty($current_post_info['slug'])) {
                     continue;
                 }
 
-                $title = $post_info['title'];
-                $slug = $post_info['slug'];
-                $summary = isset($post_info['summary']) ? $post_info['summary'] : '';
-                $categories = isset($post_info['categories']) ? $post_info['categories'] : array();
-                $tags = isset($post_info['tags']) ? $post_info['tags'] : array();
+                $title = $current_post_info['title'];
+                $slug = $current_post_info['slug'];
+                $summary = isset($current_post_info['summary']) ? $current_post_info['summary'] : '';
+                $categories = isset($current_post_info['categories']) ? $current_post_info['categories'] : array();
+                $tags = isset($current_post_info['tags']) ? $current_post_info['tags'] : array();
+
+                $other_posts = array();
+                foreach ($cluster_posts as $p) {
+                    if ($p['slug'] !== $slug) {
+                        $other_posts[] = $p;
+                    }
+                }
 
                 $response = $this->plugin->api->generate_single_post_content(
                     $title,
@@ -87,7 +98,9 @@ class OpenAI_Post_Gen_Generator
                     $categories,
                     $tags,
                     $theme,
-                    $cluster_topic
+                    $cluster_topic,
+                    $other_posts,
+                    $site_url
                 );
 
                 if (is_wp_error($response)) {
@@ -110,8 +123,6 @@ class OpenAI_Post_Gen_Generator
                 }
             }
         }
-
-        $this->add_internal_links($all_posts_info);
 
         return true;
     }
@@ -171,37 +182,5 @@ class OpenAI_Post_Gen_Generator
     {
         $d = DateTime::createFromFormat($format, $date);
         return $d && $d->format($format) === $date;
-    }
-
-    private function add_internal_links($all_posts_info)
-    {
-        $posts_by_cluster = array();
-        foreach ($all_posts_info as $info) {
-            $cluster = $info['cluster_topic'];
-            if (!isset($posts_by_cluster[$cluster])) {
-                $posts_by_cluster[$cluster] = array();
-            }
-            $posts_by_cluster[$cluster][] = $info;
-        }
-
-        foreach ($posts_by_cluster as $cluster => $posts) {
-            if (count($posts) < 2) continue;
-
-            foreach ($posts as $current_post) {
-                $post_id = $current_post['id'];
-                $content = get_post_field('post_content', $post_id);
-                $related_links = "<h3>Related posts in this cluster:</h3><ul>";
-                foreach ($posts as $other_post) {
-                    if ($other_post['id'] == $post_id) continue;
-                    $related_links .= '<li><a href="' . get_permalink($other_post['id']) . '">' . esc_html($other_post['title']) . '</a></li>';
-                }
-                $related_links .= "</ul>";
-                $content .= "\n\n" . $related_links;
-                wp_update_post(array(
-                    'ID' => $post_id,
-                    'post_content' => $content
-                ));
-            }
-        }
     }
 }

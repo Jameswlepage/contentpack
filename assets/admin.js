@@ -1,4 +1,28 @@
 jQuery(document).ready(function ($) {
+
+    function recalcTotalPosts() {
+        var clusterCount = parseInt($('#opg-cluster-count').val(), 10) || 0;
+
+        // Right now this is forecasting things but I'd like to make it so we can actually set the number of posts per cluster in the future
+
+        var totalPosts = clusterCount * 5;
+        $('#opg-total-posts').text(totalPosts);
+
+        if (totalPosts > 50) {
+            $('#opg-warning').show();
+        } else {
+            $('#opg-warning').hide();
+        }
+    }
+
+
+    $('#opg-cluster-count, #opg-cluster-topics').on('input change', function () {
+        recalcTotalPosts();
+    });
+
+
+    recalcTotalPosts();
+
     $('#opg-generate-single').on('click', function (e) {
         e.preventDefault();
         var title = $('#opg-single-title').val();
