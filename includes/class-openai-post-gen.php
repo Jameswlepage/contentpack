@@ -1,12 +1,11 @@
 <?php
 
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit;
 }
 
 class OpenAI_Post_Gen
 {
-
     public $option_name = 'openai_post_gen_options';
     public $api;
     public $generator;
@@ -24,7 +23,6 @@ class OpenAI_Post_Gen
     public function init()
     {
         $this->admin->init();
-
         if (defined('WP_CLI') && WP_CLI) {
             $this->cli->init();
         }
@@ -41,7 +39,6 @@ class OpenAI_Post_Gen
         $options = get_option($this->option_name, array());
         $options['api_key'] = $key;
         update_option($this->option_name, $options);
-        // Update API instance key
         $this->api->set_api_key($key);
     }
 }

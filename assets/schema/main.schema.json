@@ -1,0 +1,117 @@
+{
+    "$id": "https://example.com/schema.json",
+    "description": "Schema definitions for OpenAI Post Generator",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "additionalProperties": false,
+    "$defs": {
+        "plan": {
+            "type": "object",
+            "properties": {
+                "clusters": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "cluster_topic": {
+                                "type": "string"
+                            },
+                            "posts": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "title": {
+                                            "type": "string"
+                                        },
+                                        "slug": {
+                                            "type": "string"
+                                        },
+                                        "summary": {
+                                            "type": "string"
+                                        },
+                                        "categories": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "tags": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "planned_publish_date": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "title",
+                                        "slug",
+                                        "summary",
+                                        "categories",
+                                        "tags",
+                                        "planned_publish_date"
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            }
+                        },
+                        "required": [
+                            "cluster_topic",
+                            "posts"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": [
+                "clusters"
+            ],
+            "additionalProperties": false
+        },
+        "single_post": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "publish_date": {
+                    "type": "string"
+                },
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "title",
+                "slug",
+                "summary",
+                "content",
+                "publish_date",
+                "categories",
+                "tags"
+            ],
+            "additionalProperties": false
+        }
+    }
+}

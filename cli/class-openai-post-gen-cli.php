@@ -1,12 +1,11 @@
 <?php
 
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit;
 }
 
 class OpenAI_Post_Gen_CLI
 {
-
     private $plugin;
 
     public function __construct($plugin)

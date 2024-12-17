@@ -1,0 +1,30 @@
+.opg-wrap {
+  max-width: 800px;
+}
+
+.opg-form {
+  background: #fff;
+  padding: 20px;
+  border: 1px solid #eee;
+  margin-bottom: 20px;
+}
+
+.opg-panel {
+  background: #f9f9f9;
+  padding: 20px;
+  border: 1px solid #ddd;
+}
+
+.opg-panel h3 {
+  margin-top: 0;
+}
+
+.opg-panel input[type="text"],
+.opg-panel input[type="number"],
+.opg-panel textarea {
+  margin-bottom: 10px;
+}
+
+#opg-status {
+  font-size: 14px;
+}

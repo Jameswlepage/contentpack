@@ -1,12 +1,11 @@
 <?php
 
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit;
 }
 
 class OpenAI_Post_Gen_Admin
 {
-
     private $plugin;
 
     public function __construct($plugin)
@@ -62,9 +61,9 @@ class OpenAI_Post_Gen_Admin
             return;
         }
 ?>
-        <div class="wrap">
+        <div class="wrap opg-wrap">
             <h1>OpenAI Post Generator</h1>
-            <form method="post" action="options.php">
+            <form method="post" action="options.php" class="opg-form">
                 <?php
                 settings_fields($this->plugin->option_name);
                 do_settings_sections('openai-post-gen');
@@ -75,20 +74,26 @@ class OpenAI_Post_Gen_Admin
             <hr>
             <h2>Generate Posts</h2>
             <p>Use the form below to generate either a single post or multiple clustered posts.</p>
-            <div id="openai-post-gen-ui">
+            <div id="openai-post-gen-ui" class="opg-panel">
                 <h3>Single Post Generation</h3>
-                <p>Specify optional title, topic, theme:</p>
-                <input type="text" id="opg-single-title" placeholder="Title (optional)">
-                <input type="text" id="opg-single-topic" placeholder="Topic (optional)">
-                <input type="text" id="opg-single-theme" placeholder="Theme (optional)">
+                <p><small>Specify optional title, topic, theme:</small></p>
+                <input type="text" id="opg-single-title" placeholder="Title (optional)" class="regular-text">
+                <input type="text" id="opg-single-topic" placeholder="Topic (optional)" class="regular-text">
+                <input type="text" id="opg-single-theme" placeholder="Theme (optional)" class="regular-text">
                 <button id="opg-generate-single" class="button button-primary">Generate Single Post</button>
 
                 <hr>
                 <h3>Bulk Generation</h3>
-                <p>Specify number of clusters, cluster topics (comma separated), and a general theme. The system will generate a plan and then all posts.</p>
-                <label>Number of clusters: <input type="number" id="opg-cluster-count" min="1" value="5"></label><br>
-                <label>Cluster topics (comma-separated): <input type="text" id="opg-cluster-topics" style="width:400px;" placeholder="e.g. Healthy Recipes, Fitness Tips"></label><br>
-                <label>General theme: <textarea id="opg-general-theme" style="width:400px;height:100px;"></textarea></label><br>
+                <p><small>Specify number of clusters, cluster topics, and general theme. A plan is generated first, then all posts.</small></p>
+                <label>Number of clusters: <input type="number" id="opg-cluster-count" min="1" value="3" class="small-text"></label><br><br>
+                <label>Cluster topics (comma-separated):<br>
+                    <input type="text" id="opg-cluster-topics" style="width:400px;"
+                        value="Artificial Intelligence Ethics, Machine Learning Applications, Data Privacy Regulations"
+                        placeholder="e.g. Healthy Recipes, Fitness Tips" class="regular-text">
+                </label><br><br>
+                <label>General theme:<br>
+                    <textarea id="opg-general-theme" style="width:400px;height:100px;">Create comprehensive content about the impact of AI technology on modern society. Focus on explaining complex concepts in an accessible way, addressing concerns and opportunities, and exploring real-world implications for businesses and individuals.</textarea>
+                </label><br><br>
                 <button id="opg-generate-bulk" class="button button-primary">Generate Bulk Posts</button>
 
                 <div id="opg-status" style="margin-top:20px;"></div>
@@ -105,6 +110,7 @@ class OpenAI_Post_Gen_Admin
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('opg_ajax_nonce')
             ));
+            wp_enqueue_style('opg-admin-css', plugin_dir_url(__FILE__) . '../assets/admin.css', array(), '1.0', 'all');
         }
     }
 

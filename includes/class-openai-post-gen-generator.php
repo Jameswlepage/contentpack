@@ -1,12 +1,11 @@
 <?php
 
-if (! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     exit;
 }
 
 class OpenAI_Post_Gen_Generator
 {
-
     private $plugin;
 
     public function __construct($plugin)
@@ -16,22 +15,27 @@ class OpenAI_Post_Gen_Generator
 
     public function generate_single_post($title = '', $topic = '', $theme = '', $slug = '', $categories = array(), $tags = array(), $summary = '')
     {
-        // If not provided, we can ask the model to generate on the fly by calling a simplified plan or direct post generation prompt.
         if (empty($title)) {
-            // We'll just generate a simple post with minimal instructions
+            // Generate a simple single post if no title given
             $topic_msg = $topic ? "Topic: $topic\n" : "";
             $theme_msg = $theme ? "Theme: $theme\n" : "";
-            $prompt = "You are a professional content writer. Generate a single WordPress post.\n$topic_msg$theme_msgReturn JSON with title, slug, summary, content, publish_date (ISO 8601), categories, tags.\n";
-            $response = $this->plugin->api->request(array(
+            $prompt = "You are a professional content writer. Generate a single WordPress post in strict JSON format.\n";
+            $prompt .= "$topic_msg$theme_msg";
+            $prompt .= "Return JSON with title, slug, summary, content, publish_date (ISO 8601), categories, tags.\n";
+            $prompt .= "Follow the schema strictly and return only JSON.\n";
+
+            $messages = array(
                 array('role' => 'system', 'content' => 'You are a helpful assistant.'),
                 array('role' => 'user', 'content' => $prompt)
-            ));
+            );
+
+            $response = $this->plugin->api->request($messages, 'single_post');
             if (is_wp_error($response)) {
                 return $response;
             }
             $data = json_decode($response, true);
         } else {
-            // If we have details, generate using the more structured method
+            // Use the structured single post generation
             $response = $this->plugin->api->generate_single_post_content($title, $slug, $summary, $categories, $tags, $theme, $topic);
             if (is_wp_error($response)) {
                 return $response;
@@ -58,10 +62,8 @@ class OpenAI_Post_Gen_Generator
             return new WP_Error('invalid_plan', 'OpenAI did not return a valid plan structure.');
         }
 
-        // We will store all posts info to handle internal linking after insertion
         $all_posts_info = array();
 
-        // Generate each post's full content
         foreach ($plan['clusters'] as $cluster_data) {
             if (empty($cluster_data['cluster_topic']) || empty($cluster_data['posts'])) {
                 continue;
@@ -77,6 +79,7 @@ class OpenAI_Post_Gen_Generator
                 $summary = isset($post_info['summary']) ? $post_info['summary'] : '';
                 $categories = isset($post_info['categories']) ? $post_info['categories'] : array();
                 $tags = isset($post_info['tags']) ? $post_info['tags'] : array();
+
                 $response = $this->plugin->api->generate_single_post_content(
                     $title,
                     $slug,
@@ -131,7 +134,6 @@ class OpenAI_Post_Gen_Generator
             return $post_id;
         }
 
-        // Categories
         if (!empty($data['categories']) && is_array($data['categories'])) {
             $cat_ids = array();
             foreach ($data['categories'] as $cat_name) {
@@ -145,7 +147,6 @@ class OpenAI_Post_Gen_Generator
             }
         }
 
-        // Tags
         if (!empty($data['tags']) && is_array($data['tags'])) {
             wp_set_post_tags($post_id, $data['tags']);
         }
@@ -166,7 +167,7 @@ class OpenAI_Post_Gen_Generator
         return $new_term['term_id'];
     }
 
-    private function validate_date($date, $format = 'Y-m-d\TH:i:s')
+    private function validate_date($date, $format = 'Y-m-d\\TH:i:s')
     {
         $d = DateTime::createFromFormat($format, $date);
         return $d && $d->format($format) === $date;
@@ -174,7 +175,6 @@ class OpenAI_Post_Gen_Generator
 
     private function add_internal_links($all_posts_info)
     {
-        // Group by cluster_topic
         $posts_by_cluster = array();
         foreach ($all_posts_info as $info) {
             $cluster = $info['cluster_topic'];
