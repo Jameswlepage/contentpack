@@ -21,7 +21,6 @@ This is intended to quickly generate content to make it easy to test search, clu
 - **Internal Linking:** For bulk-generated posts, internal links to other posts in the same cluster are naturally integrated into the post content.
 - **Dynamic UI:** Calculates total number of posts based on the number of clusters (clusters \* 5 posts per cluster) and warns when generating a large number of posts.
 - **WP-CLI Support:** Run `wp openai-post-gen single` or `wp openai-post-gen bulk` from the command line.
-- **Admin Interface Styling:** Improved UI with custom CSS.
 
 ## Installation
 
